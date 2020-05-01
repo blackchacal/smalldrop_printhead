@@ -23,15 +23,18 @@ const char model_name[] = "SD-PHEAD-1";
 word speed;
 byte temp;
 byte volume;
+byte valid_volumes[] = {VOL_2ML, VOL_5ML, VOL_10ML};
 byte uv_intensity;
 
 // Power management
 #if POWER_MODE == 0
 PowerMode power_mode = PLUG;
 BatState bat_state = NO_BAT;
+word bat_val = -1;
 #else
 PowerMode power_mode = BAT;
 BatState bat_state = BAT_FULL;
+word bat_val = 0;
 #endif
 
 // Communication

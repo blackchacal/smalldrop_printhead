@@ -46,6 +46,8 @@ void receive_command(byte received_byte)
  */
 void process_command(byte *command, byte size)
 {
+  // TODO: Validate message CRC
+
   if (command[0] == 0)
   {
     // Received PING"

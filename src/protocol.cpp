@@ -57,18 +57,45 @@ void parse_general_commands(byte *command, byte size)
   switch (command[0]) // Command code
   {
   case 0x01: // init
-    volume = (size > 1 && command[1] != 0) ? command[1] : volume; // Has volume argument. Set Volume.
-    speed = (size > 2 && command[2] != 0) ? command[2] : speed; // Has speed argument. Set Speed.
+    if (size > 1 && command[1] != 0) // Has volume argument. Set Volume.
+    {
+      bool valid_volume = false;
+      for (byte i = 0; i < sizeof valid_volumes; i++)
+      {
+        if (command[1] == valid_volumes[i])
+        {
+          volume = command[1];
+          valid_volume = true;
+          break;
+        }
+      }
+      if (!valid_volume)
+      {
+        volume = VOL_10ML; // Set default volume
+        command_error(E_INVALID_VOLUME);
+      }
+    }
+    else
+      volume = VOL_10ML; // Set default volume
+
+    if (size > 3) // Has speed argument. Set Speed.
+    {
+      if (command[2] != 0 && command[3] != 0) // Speed is not zero
+        speed = command[2] | ((word)command[3] << 8);
+    }
+    else
+      speed = 5; // Set default speed (5 ml/s)  
+
 #ifdef HAS_TEMPERATURE
-    temp = (size > 3 && command[3] != 0) ? command[3] : temp; // Has temp argument. Set temperature.
+    temp = (size > 4 && command[4] != 0) ? command[4] : 40; // Has temp argument. Set temperature.
 #endif
 
-    // TODO: Call init routine
     command_reply_ok();
+    // TODO: Call init routine
     break;
   case 0x02: // shutdown
-    // TODO: Call shutdown routine
     command_reply_ok();
+    // TODO: Call shutdown routine
     break;
   case 0x03: // description
     {
@@ -97,9 +124,32 @@ void parse_calibration_commands(byte *command, byte size)
   switch (command[0]) // Command code
   {
   case 0x01: // calibrate
+    if (size > 1)
+    {
+      bool valid_volume = false;
+      for (byte i = 0; i < sizeof valid_volumes; i++)
+      {
+        if (command[1] == valid_volumes[i])
+        {
+          volume = command[1];
+          valid_volume = true;
+          break;
+        }
+      }
+      if (!valid_volume)
+      {
+        command_error(E_INVALID_VOLUME);
+        return;
+      }
+
+      // TODO: Run calibration routine
+      command_reply_ok();
+    }
+    else
+      command_error(E_BAD_COMMAND);
     break;
   default:
-    // TODO: Send bad command error
+    command_error(E_BAD_COMMAND);
     break;
   }
 }
@@ -112,9 +162,18 @@ void parse_battery_commands(byte *command, byte size)
   switch (command[0]) // Command code
   {
   case 0x01: // read_battery
+    if (power_mode == PowerMode::BAT)
+    {
+      byte data[2];
+      data[0] = bat_val;
+      data[1] = bat_val >> 8;
+      command_reply(data, 2);
+    }
+    else
+      command_error(E_NO_BAT);
     break;
   default:
-    // TODO: Send bad command error
+    command_error(E_BAD_COMMAND);
     break;
   }
 }
@@ -127,15 +186,28 @@ void parse_print_commands(byte *command, byte size)
   switch (command[0]) // Command code
   {
   case 0x01: // start_print
+    // TODO: Start motor to extrude bioink at configured speed.
+    command_reply_ok();
     break;
   case 0x02: // stop_print
+    // TODO: Stop motor.
+    command_reply_ok();
     break;
   case 0x03: // set_speed
+    if (size > 2) // Has speed argument. Set Speed.
+    {
+      if (command[1] != 0 && command[2] != 0) // Speed is not zero
+        speed = command[1] | ((word)command[2] << 8);
+      command_reply_ok();
+    }
+    else
+      command_error(E_BAD_COMMAND);
     break;
   case 0x04: // refill
+    command_reply_ok();
     break;
   default:
-    // TODO: Send bad command error
+    command_error(E_BAD_COMMAND);
     break;
   }
 }
@@ -145,7 +217,29 @@ void parse_print_commands(byte *command, byte size)
  */
 void parse_temperature_commands(byte *command, byte size)
 {
-  // TODO: Send bad command error if no hardware support
+#ifdef HAS_TEMPERATURE
+  switch (command[0]) // Command code
+  {
+  case 0x01: // get_temperature
+    command_reply(&temp, 1);
+    break;
+  case 0x02: // set_temperature
+    if (size > 1) // Has temperature arg. Set temperature.
+    {
+      if (command[1] != 0) // Temperature is not zero
+        temp = command[1];
+      command_reply_ok();
+    }
+    else
+      command_error(E_BAD_COMMAND);
+    break;
+  default:
+    command_error(E_BAD_COMMAND);
+    break;
+  }
+#else  
+  command_error(E_NO_TEMP);
+#endif
 }
 
 /**
@@ -153,7 +247,43 @@ void parse_temperature_commands(byte *command, byte size)
  */
 void parse_uv_commands(byte *command, byte size)
 {
-  // TODO: Send bad command error if no hardware support
+#ifdef HAS_UV_LIGHTS
+  switch (command[0]) // Command code
+  {
+  case 0x01: // turn_on_uv
+    // TODO: Turn on the UV lights
+    command_reply_ok();
+    break;
+  case 0x02: // turn_off_uv
+    // TODO: Turn off the UV lights
+    command_reply_ok();
+    break;
+  case 0x03: // set_uv_intensity
+    if (size > 1) // Has intensity arg. Set UV intensity
+    {
+      uv_intensity = command[1];
+      command_reply_ok();
+    }
+    else
+      command_error(E_BAD_COMMAND);
+    break;
+  case 0x04: // set_uv_map
+    if (size > 1)
+    {
+      if (command[1] != 0) // Map is not zero
+        uv_map = command[1];
+      command_reply_ok();
+    }
+    else
+      command_error(E_BAD_COMMAND);
+    break;
+  default:
+    command_error(E_BAD_COMMAND);
+    break;
+  }
+#else  
+  command_error(E_NO_UV);
+#endif
 }
 
 /**
@@ -182,7 +312,7 @@ void parse_command(byte *command, byte size)
     parse_uv_commands(command+1, size-1);
     break;
   default:
-    // TODO: Send bad command error
+    command_error(E_BAD_COMMAND);
     break;
   }
 }
