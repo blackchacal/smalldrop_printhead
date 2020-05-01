@@ -6,8 +6,6 @@
  * \brief Main source file.
  */
 
-#include "Arduino.h"
-
 // Main header file
 #include "main.h"
 
@@ -19,7 +17,7 @@
 // For variable documentation refer to the file main.h.
 
 // Device description
-byte model_name[20] = "SD-PHEAD-1";
+const char model_name[] = "SD-PHEAD-1";
 
 // Printing properties
 word speed;

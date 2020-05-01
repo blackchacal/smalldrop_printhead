@@ -11,6 +11,7 @@
 
 #include "main.h"
 
+
 /**
  * \fn void receive_command(byte incoming_byte)
  * \brief Receives each byte from serial port until it forms a complete command.
@@ -20,11 +21,12 @@
 void receive_command(byte received_byte);
 
 /**
- * \fn void parse_command(byte *command)
+ * \fn void parse_command(byte *command, byte size)
  * \brief Processes the command received.
  * 
  * \param command Pointer to command's first byte 
+ * \param size Command size 
  */
-void process_command(byte *command);
+void process_command(byte *command, byte size);
 
 #endif // SMALLDROP_PHEAD_UART_H

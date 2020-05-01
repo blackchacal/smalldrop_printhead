@@ -5,10 +5,17 @@
 #define SMALLDROP_PHEAD_MAIN_H
 
 #include "stdint.h"
+#include "string.h"
+
+#include "Arduino.h"
 
 /**
  * MACROS
  *****************************************************************************/
+
+// Specific functionalities
+// #define HAS_TEMPERATURE // Uncomment if device has temperature control support.
+// #define HAS_UV_LIGHTS // Uncomment if device has UV lights for print curing.
 
 //  Power
 #define POWER_MODE  0  // 0 - Power supply | 1 - Battery powered
@@ -21,12 +28,27 @@
 // Connection
 #define PING_TIMEOUT 5 // Max number of seconds between consecutive ping messages, before connection timeout.
 
+// Protocol
+#define CMD_START_CODE  0xBD
+#define EVT_START_CODE  0xEE
+#define RSP_START_CODE  0xA0
+#define RSP_OK_CODE     0x00
+#define ERR_START_CODE  0xA1
+
 // Error codes
 #define E_INVALID_CRC  0x00
 #define E_BAD_COMMAND  0x01
 #define E_BAD_COMMS    0x02
 #define E_BAD_UV_MAP   0x03
 #define E_OTHER        0xFF
+
+// Event codes
+#define EVT_END_INIT      0x01
+#define EVT_END_SHUTDOWN  0x02
+#define EVT_END_CALIB     0x03
+#define EVT_LOW_BATT      0x04
+#define EVT_NOINK         0x05
+#define EVT_END_REFILL    0x06
 
 // Buffers
 #define RX_BUFFER_SIZE 20
@@ -70,7 +92,7 @@ enum BatState
  *****************************************************************************/
 
 // Print head description
-extern byte model_name[MODELNAME_SIZE]; /** \var Model name string. */
+extern const char model_name[MODELNAME_SIZE]; /** \var Model name string. */
 
 // Printing properties
 extern word speed; /** \var Print speed in ml/s (0-65535). */

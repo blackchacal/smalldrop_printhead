@@ -7,7 +7,7 @@
  */
 
 #include "uart.h"
-#include "Arduino.h"
+#include "protocol.h"
 
 /**
  * \copybrief void receive_command(byte received_byte)
@@ -18,7 +18,7 @@ void receive_command(byte received_byte)
   // All system messages start with byte 0xBD.
 
   // If received start command code or other bytes from same command
-  if ((received_byte == 0xBD && rx_pos == 0) || (rx_pos <= rx_len + 3 && rx_pos > 1))
+  if ((received_byte == CMD_START_CODE && rx_pos == 0) || (rx_pos <= rx_len + 3 && rx_pos > 1))
     rx_buffer[rx_pos++] = received_byte;
   else if (rx_pos == 1) // Received len byte
   {
@@ -28,7 +28,7 @@ void receive_command(byte received_byte)
 
   if (rx_pos == rx_len + 3) // If command complete
   {
-    process_command(rx_buffer+1); // Pass len also
+    process_command(rx_buffer+1, rx_len); // Pass len also
     rx_pos = 0;
     rx_len = 0;
   }
@@ -42,15 +42,19 @@ void receive_command(byte received_byte)
 }
 
 /**
- * \copybrief void parse_command(byte *command)
+ * \copybrief void parse_command(byte *command, byte size)
  */
-void process_command(byte *command)
+void process_command(byte *command, byte size)
 {
   if (command[0] == 0)
-    Serial.write("Received PING");
+  {
+    // Received PING"
+    // Reset timeout
+    command_reply_ok();
+  }
   else
   {
-   // parse command
-   Serial.write("Received command");
+    // parse command
+    parse_command(command+1, size);
   }
 }
