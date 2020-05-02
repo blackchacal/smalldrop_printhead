@@ -46,7 +46,8 @@ void setup()
 {
   // Setup serial comms for communication with HC-05 Bluetooth module
   // baud rate: B115200
-  Serial.begin(115200);
+  Serial.begin(9600);
+  // Serial.begin(115200);
 }
 
 void loop()
